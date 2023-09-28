@@ -38,6 +38,11 @@ export class Website extends Entity {
   })
   userId?: string;
 
+  @property({
+    type: 'string',
+  })
+  frequencyId?: string;
+
   constructor(data?: Partial<Website>) {
     super(data);
   }
