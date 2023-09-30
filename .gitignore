@@ -66,5 +66,5 @@ typings/
 # Emacs auto-save file
 \#*#
 
-# Contraseña DB
+# Database configuration file
 /src/datasources/mongo-atlas.datasource.ts
