@@ -1,4 +1,4 @@
-import {inject} from '@loopback/core';
+import { inject } from '@loopback/core';
 import {
   Request,
   RestBindings,
@@ -6,7 +6,8 @@ import {
   response,
   ResponseObject,
 } from '@loopback/rest';
-
+import { authenticate } from '@loopback/authentication';
+import { SecurityBindings, securityId, UserProfile } from '@loopback/security';
 /**
  * OpenAPI response for ping()
  */
@@ -18,13 +19,13 @@ const PING_RESPONSE: ResponseObject = {
         type: 'object',
         title: 'PingResponse',
         properties: {
-          greeting: {type: 'string'},
-          date: {type: 'string'},
-          url: {type: 'string'},
+          greeting: { type: 'string' },
+          date: { type: 'string' },
+          url: { type: 'string' },
           headers: {
             type: 'object',
             properties: {
-              'Content-Type': {type: 'string'},
+              'Content-Type': { type: 'string' },
             },
             additionalProperties: true,
           },
@@ -53,9 +54,23 @@ export class PingController {
     };
   }
 
+  @authenticate({ strategy: 'auth0-jwt', options: { scopes: ['greet'] } })
+  @get('/greet')
+  @response(200, PING_RESPONSE)
+  async greet(
+    @inject(SecurityBindings.USER)
+    currentUserProfile: UserProfile,
+  ): Promise<UserProfile> {
+    // (@jannyHou)FIXME: explore a way to generate OpenAPI schema
+    // for symbol property
+    currentUserProfile.id = currentUserProfile[securityId];
+    currentUserProfile[securityId] = '';
+    return currentUserProfile;
+  }
+
   @get('/sleep', {
     parameters: [{
-      name: 'ms', schema: {type: 'number'}, in:
+      name: 'ms', schema: { type: 'number' }, in:
         'query'
     }],
     responses: {
@@ -63,7 +78,7 @@ export class PingController {
         description: 'Sleep in ms',
         content: {
           'application/json': {
-            schema: {type: 'string'},
+            schema: { type: 'string' },
           },
         },
       },
@@ -78,19 +93,19 @@ export class PingController {
   }
 
   @get('/fib', {
-    parameters: [{name: 'num', schema: {type: 'number'}, in: 'query'}],
+    parameters: [{ name: 'num', schema: { type: 'number' }, in: 'query' }],
     responses: {
       '200': {
         description: 'Compute fibonacci',
         content: {
           'application/json': {
-            schema: {type: 'number'},
+            schema: { type: 'number' },
           },
         },
       },
     },
   })
-  async fib(num: number) {return this.fibonacci(num)}
+  async fib(num: number) { return this.fibonacci(num) }
   fibonacci(num: number): number {
     if (num <= 1) return 1;
     return this.fibonacci(num - 1) + this.fibonacci(num - 2);
