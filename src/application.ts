@@ -1,5 +1,5 @@
 import { BootMixin } from '@loopback/boot';
-import { ApplicationConfig } from '@loopback/core';
+import { ApplicationConfig, createBindingFromClass } from '@loopback/core';
 import {
   RestExplorerBindings,
   RestExplorerComponent,
@@ -11,6 +11,9 @@ import path from 'path';
 import { MySequence } from './sequence';
 import { AuthenticationComponent, registerAuthenticationStrategy } from '@loopback/authentication';
 import { JWTAuthenticationStrategy, JWTServiceProvider, KEY } from './authentication-strategies';
+import {CronComponent} from '@loopback/cron';
+import {MyCronJob} from './utils/MyCronJob';
+
 
 export { ApplicationConfig };
 
@@ -52,7 +55,7 @@ export class SearchserviceApplication extends BootMixin(
     registerAuthenticationStrategy(this as any, JWTAuthenticationStrategy);
     this.configure(KEY).to({
       jwksUri: 'https://dev-ie4eel16bqhfmfte.us.auth0.com/.well-known/jwks.json',
-      //audience: 'http://localhost:3000/',
+      audience: 'http://localhost:3000/api',
       issuer: 'https://dev-ie4eel16bqhfmfte.us.auth0.com/',
       algorithms: ['RS256'],
     });
@@ -74,5 +77,8 @@ export class SearchserviceApplication extends BootMixin(
       security: [{ bearerAuth: [] }],
     });
 
+    this.component(CronComponent);
+
+    this.add(createBindingFromClass(MyCronJob));
   }
 }
