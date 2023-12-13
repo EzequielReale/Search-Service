@@ -34,14 +34,14 @@ export class Website extends Entity {
   snippet: string;
 
   @property({
-    type: 'string',
+    type: 'number',
   })
-  userId?: string;
+  frequency: number;
 
   @property({
     type: 'string',
   })
-  frequencyId?: string;
+  userId?: string;
 
   constructor(data?: Partial<Website>) {
     super(data);
