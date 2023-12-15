@@ -67,7 +67,8 @@
     "loopback-connector-mongodb": "^7.0.0-alpha.1",
     "mongodb": "^6.1.0",
     "node-fetch": "^2.7.0",
-    "tslib": "^2.0.0"
+    "tslib": "^2.0.0",
+    "valid-url": "^1.0.9"
   },
   "devDependencies": {
     "@loopback/build": "^10.1.3",
