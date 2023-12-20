@@ -3,7 +3,6 @@ import { Website } from "../models";
 
 const fetch = require('node-fetch');
 const validUrl = require('valid-url');
-//const visitedUrls = new Set<string>(); // Conjunto para almacenar URLs visitadas
 
 async function getWebsiteInfo(website: Website) {
     if (!website.url) throw new Error('No se definió una url');
@@ -20,7 +19,7 @@ async function getWebsiteInfo(website: Website) {
         });
 }
 
-export async function processWebsite(website: Website, visitedUrls:Set<string> , depth: number = 1) {
+export async function processWebsite(website: Website, visitedUrls: Set<string>, depth: number = 1) {
     try {
         if (visitedUrls.has(website.url)) return; // Evitar procesar URLs ya visitadas
 
@@ -52,8 +51,6 @@ export async function processWebsite(website: Website, visitedUrls:Set<string> ,
                 });
             }
         }
-
-
     } catch (error) {
         console.error('Error procesando el website:', error.message);
     }
