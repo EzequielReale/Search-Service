@@ -22,7 +22,27 @@ async function getWebsiteInfo(website: Website) {
         });
 }
 
-export async function processWebsite(website: Website, visitedUrls: Set<string>, depth: number = 1, doc: object = {}) {
+function createWebsite(website: Website, link: string) {
+    return new Website({
+        id: website.id,
+        name: website.name,
+        url: link,
+        pageLevels: website.pageLevels,
+        snippet: website.snippet,
+        frequency: website.frequency,
+        userId: website.userId,
+    });
+}
+
+async function createPage(doc: object, website: Website) {
+    const page = new Page({
+        doc: doc,
+        websiteId: website.id,
+    });
+    await pageRepository.create(page);
+}
+
+export async function processWebsite(website: Website, visitedUrls: Set<string>, depth: number = 1) {
     try {
         if (visitedUrls.has(website.url)) return; // Para no procesar URLs ya visitadas
 
@@ -34,29 +54,20 @@ export async function processWebsite(website: Website, visitedUrls: Set<string>,
             const data = cheerio.load(body);
             const fn = eval(website.snippet);
             const result = fn(data);
+
+            let doc = {};
             doc = { ...doc, ...result };
             doc = { ...doc, url: website.url };
-            const page = new Page({
-                doc: doc,
-                websiteId: website.id,
-            });
-            pageRepository.create(page);
+            
+            await createPage(doc, website);
 
             if (depth < website.pageLevels) {
                 const links = data('a');
                 links.each(async (index, element) => {
                     const link = data(element).attr('href');
                     if (link && link.startsWith('http')) {
-                        const linkedWebsite = new Website({
-                            id: website.id,
-                            name: website.name,
-                            url: link,
-                            pageLevels: website.pageLevels,
-                            snippet: website.snippet,
-                            frequency: website.frequency,
-                            userId: website.userId,
-                        });
-                        await processWebsite(linkedWebsite, visitedUrls, depth + 1, doc);
+                        const linkedWebsite = createWebsite(website, link);
+                        await processWebsite(linkedWebsite, visitedUrls, depth + 1);
                     }
                 });
             }
@@ -64,5 +75,4 @@ export async function processWebsite(website: Website, visitedUrls: Set<string>,
     } catch (error) {
         console.error('Error procesando el website:', error.message);
     }
-    return doc;
 }

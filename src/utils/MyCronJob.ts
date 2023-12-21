@@ -1,12 +1,8 @@
 import { CronJob, cronJob } from '@loopback/cron';
 import { repository } from '@loopback/repository';
 import { Website } from '../models';
-import { PageRepository, WebsiteRepository } from '../repositories';
+import { WebsiteRepository } from '../repositories';
 import { processWebsite } from './cheerioHelper';
-import { MongoAtlasDataSource } from '../datasources';
-
-const pageRepository = new PageRepository(new MongoAtlasDataSource());
-
 
 @cronJob()
 export class MyCronJob extends CronJob {
@@ -32,7 +28,7 @@ export class MyCronJob extends CronJob {
               try {
                 await websiteRepository.pages(website.id).delete(); // Borro las páginas anteriores
                 await processWebsite(website, visitedUrls); // Proceso el website
-                console.log(`Procesado el website ${website.name} (${website.url})`);
+                console.log(`Fin del procesamiento del website ${website.name} (${website.url})`);
                 visitedUrls.clear();
               }
               catch (error) {
