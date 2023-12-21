@@ -1,4 +1,5 @@
-import {Entity, model, property} from '@loopback/repository';
+import {Entity, model, property, hasMany} from '@loopback/repository';
+import {Page} from './page.model';
 
 @model()
 export class Website extends Entity {
@@ -37,6 +38,14 @@ export class Website extends Entity {
     type: 'number',
   })
   frequency: number;
+
+
+//  @property({
+  @hasMany(() => Page)
+  pages: Page[];
+//    type: 'object',
+//  })
+//  docs?: object;
 
   @property({
     type: 'string',

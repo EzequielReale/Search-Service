@@ -1,8 +1,11 @@
 import * as cheerio from 'cheerio';
-import { Website } from "../models";
+import { Page, Website } from "../models";
+import { PageRepository } from '../repositories';
+import { MongoAtlasDataSource } from '../datasources';
 
 const fetch = require('node-fetch');
 const validUrl = require('valid-url');
+const pageRepository = new PageRepository(new MongoAtlasDataSource());
 
 async function getWebsiteInfo(website: Website) {
     if (!website.url) throw new Error('No se definió una url');
@@ -19,9 +22,9 @@ async function getWebsiteInfo(website: Website) {
         });
 }
 
-export async function processWebsite(website: Website, visitedUrls: Set<string>, depth: number = 1) {
+export async function processWebsite(website: Website, visitedUrls: Set<string>, depth: number = 1, doc: object = {}) {
     try {
-        if (visitedUrls.has(website.url)) return; // Evitar procesar URLs ya visitadas
+        if (visitedUrls.has(website.url)) return; // Para no procesar URLs ya visitadas
 
         visitedUrls.add(website.url);
 
@@ -31,7 +34,13 @@ export async function processWebsite(website: Website, visitedUrls: Set<string>,
             const data = cheerio.load(body);
             const fn = eval(website.snippet);
             const result = fn(data);
-            console.log("Datos extraidos:", result);
+            doc = { ...doc, ...result };
+            doc = { ...doc, url: website.url };
+            const page = new Page({
+                doc: doc,
+                websiteId: website.id,
+            });
+            pageRepository.create(page);
 
             if (depth < website.pageLevels) {
                 const links = data('a');
@@ -39,6 +48,7 @@ export async function processWebsite(website: Website, visitedUrls: Set<string>,
                     const link = data(element).attr('href');
                     if (link && link.startsWith('http')) {
                         const linkedWebsite = new Website({
+                            id: website.id,
                             name: website.name,
                             url: link,
                             pageLevels: website.pageLevels,
@@ -46,7 +56,7 @@ export async function processWebsite(website: Website, visitedUrls: Set<string>,
                             frequency: website.frequency,
                             userId: website.userId,
                         });
-                        await processWebsite(linkedWebsite, visitedUrls, depth + 1);
+                        await processWebsite(linkedWebsite, visitedUrls, depth + 1, doc);
                     }
                 });
             }
@@ -54,4 +64,5 @@ export async function processWebsite(website: Website, visitedUrls: Set<string>,
     } catch (error) {
         console.error('Error procesando el website:', error.message);
     }
+    return doc;
 }

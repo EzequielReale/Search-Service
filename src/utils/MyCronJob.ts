@@ -1,8 +1,12 @@
 import { CronJob, cronJob } from '@loopback/cron';
 import { repository } from '@loopback/repository';
 import { Website } from '../models';
-import { WebsiteRepository } from '../repositories';
+import { PageRepository, WebsiteRepository } from '../repositories';
 import { processWebsite } from './cheerioHelper';
+import { MongoAtlasDataSource } from '../datasources';
+
+const pageRepository = new PageRepository(new MongoAtlasDataSource());
+
 
 @cronJob()
 export class MyCronJob extends CronJob {
@@ -18,15 +22,17 @@ export class MyCronJob extends CronJob {
         websites.forEach(website => {
           const cronTime = `*/${website.frequency} * * * * *`;
 
-          // Si hay otra instancia le pego un tiro
-          if (this.websiteJobs[website.id]) this.websiteJobs[website.id].stop();
+
+          if (this.websiteJobs[website.id]) this.websiteJobs[website.id].stop(); // Si hay otra instancia la detengo
 
           const websiteJob = new CronJob({ // Un cronjob por website
             cronTime: cronTime,
             onTick: async () => {
               const visitedUrls = new Set<string>(); // Conjunto para almacenar URLs visitadas
               try {
-                await processWebsite(website, visitedUrls);
+                await websiteRepository.pages(website.id).delete(); // Borro las páginas anteriores
+                await processWebsite(website, visitedUrls); // Proceso el website
+                console.log(`Procesado el website ${website.name} (${website.url})`);
                 visitedUrls.clear();
               }
               catch (error) {
@@ -36,8 +42,7 @@ export class MyCronJob extends CronJob {
             start: true,
           });
 
-          // Almacenar la instancia actual en la lista así la mato despues
-          this.websiteJobs[website.id] = websiteJob;
+          this.websiteJobs[website.id] = websiteJob; // Almaceno la instancia actual en la lista así la detengo despues
         });
       },
       cronTime: '*/10 * * * * *',

@@ -55,7 +55,7 @@ export class SearchserviceApplication extends BootMixin(
     registerAuthenticationStrategy(this as any, JWTAuthenticationStrategy);
     this.configure(KEY).to({
       jwksUri: 'https://dev-ie4eel16bqhfmfte.us.auth0.com/.well-known/jwks.json',
-      audience: 'http://localhost:3000/api',
+      audience: 'http://localhost:3000/',
       issuer: 'https://dev-ie4eel16bqhfmfte.us.auth0.com/',
       algorithms: ['RS256'],
     });
