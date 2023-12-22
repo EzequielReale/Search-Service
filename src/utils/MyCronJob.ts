@@ -18,7 +18,6 @@ export class MyCronJob extends CronJob {
         websites.forEach(website => {
           const cronTime = `*/${website.frequency} * * * * *`;
 
-
           if (this.websiteJobs[website.id]) this.websiteJobs[website.id].stop(); // Si hay otra instancia la detengo
 
           const websiteJob = new CronJob({ // Un cronjob por website

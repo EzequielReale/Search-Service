@@ -1,25 +1,25 @@
 import * as cheerio from 'cheerio';
-import { Page, Website } from "../models";
-import { PageRepository } from '../repositories';
+import { Page, Website, WebsiteError } from "../models";
+import { PageRepository, WebsiteErrorRepository } from '../repositories';
 import { MongoAtlasDataSource } from '../datasources';
 
 const fetch = require('node-fetch');
 const validUrl = require('valid-url');
 const pageRepository = new PageRepository(new MongoAtlasDataSource());
+const websiteErrorRepository = new WebsiteErrorRepository(new MongoAtlasDataSource());
 
 async function getWebsiteInfo(website: Website) {
     if (!website.url) throw new Error('No se definió una url');
     if (!website.snippet) throw new Error('No se definió un extractor');
     if (!validUrl.isUri(website.url)) throw new Error('La URL tiene un formato no válido.');
 
-    return fetch(website.url)
-        .then((response: { ok: any; status: any; text: () => any; }) => {
-            return response;
-        })
-        .catch((error: { message: any; }) => {
-            console.error('Error obteniendo la información del website:', error.message);
-            return null;
-        });
+    try {
+        return await fetch(website.url);
+    }
+    catch (error) {
+        await createError(website, error);
+        return null;
+    }
 }
 
 function createWebsite(website: Website, link: string) {
@@ -34,12 +34,20 @@ function createWebsite(website: Website, link: string) {
     });
 }
 
-async function createPage(doc: object, website: Website) {
+async function createPage(document: object, website: Website) {
     const page = new Page({
-        doc: doc,
+        doc: document,
         websiteId: website.id,
     });
     await pageRepository.create(page);
+}
+
+export async function createError(website: Website, error: Error) {
+    const err = new WebsiteError({
+        log: `Error procesando el website ${website.name}. Razón: ${error.message}`,
+        websiteId: website.id,
+    });
+    await websiteErrorRepository.create(err);
 }
 
 export async function processWebsite(website: Website, visitedUrls: Set<string>, depth: number = 1) {
@@ -58,7 +66,7 @@ export async function processWebsite(website: Website, visitedUrls: Set<string>,
             let doc = {};
             doc = { ...doc, ...result };
             doc = { ...doc, url: website.url };
-            
+            console.log(doc);
             await createPage(doc, website);
 
             if (depth < website.pageLevels) {
@@ -73,6 +81,6 @@ export async function processWebsite(website: Website, visitedUrls: Set<string>,
             }
         }
     } catch (error) {
-        console.error('Error procesando el website:', error.message);
+        await createError(website, error);
     }
 }

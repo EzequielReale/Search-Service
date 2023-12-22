@@ -1,5 +1,6 @@
 import {Entity, model, property, hasMany} from '@loopback/repository';
 import {Page} from './page.model';
+import {WebsiteError} from './website-error.model';
 
 @model()
 export class Website extends Entity {
@@ -43,6 +44,9 @@ export class Website extends Entity {
 //  @property({
   @hasMany(() => Page)
   pages: Page[];
+
+  @hasMany(() => WebsiteError)
+  websiteErrors: WebsiteError[];
 //    type: 'object',
 //  })
 //  docs?: object;
