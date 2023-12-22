@@ -9,10 +9,6 @@ const pageRepository = new PageRepository(new MongoAtlasDataSource());
 const websiteErrorRepository = new WebsiteErrorRepository(new MongoAtlasDataSource());
 
 async function getWebsiteInfo(website: Website) {
-    if (!website.url) throw new Error('No se definió una url');
-    if (!website.snippet) throw new Error('No se definió un extractor');
-    if (!validUrl.isUri(website.url)) throw new Error('La URL tiene un formato no válido.');
-
     try {
         return await fetch(website.url);
     }
@@ -66,7 +62,6 @@ export async function processWebsite(website: Website, visitedUrls: Set<string>,
             let doc = {};
             doc = { ...doc, ...result };
             doc = { ...doc, url: website.url };
-            console.log(doc);
             await createPage(doc, website);
 
             if (depth < website.pageLevels) {

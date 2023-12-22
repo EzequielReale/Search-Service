@@ -2,7 +2,7 @@ import { CronJob, cronJob } from '@loopback/cron';
 import { repository } from '@loopback/repository';
 import { Website } from '../models';
 import { WebsiteRepository } from '../repositories';
-import { processWebsite } from './cheerioHelper';
+import { createError, processWebsite } from './cheerioHelper';
 
 @cronJob()
 export class MyCronJob extends CronJob {
@@ -25,13 +25,16 @@ export class MyCronJob extends CronJob {
             onTick: async () => {
               const visitedUrls = new Set<string>(); // Conjunto para almacenar URLs visitadas
               try {
-                await websiteRepository.pages(website.id).delete(); // Borro las páginas anteriores
+                await websiteRepository.pages(website.id).delete(); // Borro las páginas y errores anteriores
+                await websiteRepository.websiteErrors(website.id).delete();
+
                 await processWebsite(website, visitedUrls); // Proceso el website
                 console.log(`Fin del procesamiento del website ${website.name} (${website.url})`);
+
                 visitedUrls.clear();
               }
               catch (error) {
-                console.error(error);
+                await createError(website, error);
               }
             },
             start: true,
