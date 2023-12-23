@@ -40,7 +40,7 @@ async function createPage(document: object, website: Website) {
 
 export async function createError(website: Website, error: Error) {
     const err = new WebsiteError({
-        log: `Error procesando el website ${website.name}. Razón: ${error.message}`,
+        log: `Razón: ${error.message}`,
         websiteId: website.id,
     });
     await websiteErrorRepository.create(err);
