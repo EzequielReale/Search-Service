@@ -14,11 +14,17 @@ export class MyCronJob extends CronJob {
       onTick: async () => {
         let websites: Website[] = await websiteRepository.find();
         console.log(new Date());
+        
+        // Elimino las instancias antiguas
+        let i = 0;
+        Object.values(this.websiteJobs).forEach(job => {
+          job.stop();
+          delete this.websiteJobs[i];
+          i++;
+        });
 
         websites.forEach(website => {
           const cronTime = `*/${website.frequency} * * * * *`;
-
-          if (this.websiteJobs[website.id]) this.websiteJobs[website.id].stop(); // Si hay otra instancia la detengo
 
           const websiteJob = new CronJob({ // Un cronjob por website
             cronTime: cronTime,

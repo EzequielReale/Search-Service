@@ -4,7 +4,6 @@ import { PageRepository, WebsiteErrorRepository } from '../repositories';
 import { MongoAtlasDataSource } from '../datasources';
 
 const fetch = require('node-fetch');
-const validUrl = require('valid-url');
 const pageRepository = new PageRepository(new MongoAtlasDataSource());
 const websiteErrorRepository = new WebsiteErrorRepository(new MongoAtlasDataSource());
 
