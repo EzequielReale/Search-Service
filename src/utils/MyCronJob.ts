@@ -7,21 +7,27 @@ import { createError, processWebsite } from './cheerioHelper';
 @cronJob()
 export class MyCronJob extends CronJob {
   private websiteJobs: { [websiteId: string]: CronJob } = {};
+  private websitesIds: string[];
 
   constructor(@repository(WebsiteRepository) public websiteRepository: WebsiteRepository) {
     super({
       name: 'job-B',
       onTick: async () => {
         let websites: Website[] = await websiteRepository.find();
-        console.log(new Date());
-        
+                
         // Elimino las instancias antiguas
         let i = 0;
         Object.values(this.websiteJobs).forEach(job => {
           job.stop();
-          delete this.websiteJobs[i];
+          if (websites[i]) delete this.websiteJobs[websites[i].id];
+          else {
+            websiteRepository.websiteErrors(this.websitesIds[i]).delete();
+            websiteRepository.pages(this.websitesIds[i]).delete();
+          }
           i++;
         });
+
+        this.websitesIds = websites.map(website => website.id);
 
         websites.forEach(website => {
           const cronTime = `*/${website.frequency} * * * * *`;
