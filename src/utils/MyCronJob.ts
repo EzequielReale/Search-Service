@@ -23,6 +23,7 @@ export class MyCronJob extends CronJob {
           else {
             websiteRepository.websiteErrors(this.websitesIds[i]).delete();
             websiteRepository.pages(this.websitesIds[i]).delete();
+            delete this.websiteJobs[this.websitesIds[i]];
           }
           i++;
         });
