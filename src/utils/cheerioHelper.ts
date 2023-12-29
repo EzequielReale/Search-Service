@@ -6,6 +6,7 @@ import { MongoAtlasDataSource } from '../datasources';
 const fetch = require('node-fetch');
 const pageRepository = new PageRepository(new MongoAtlasDataSource());
 const websiteErrorRepository = new WebsiteErrorRepository(new MongoAtlasDataSource());
+var originalLink = '';
 
 async function getWebsiteInfo(website: Website) {
     try {
@@ -47,6 +48,7 @@ export async function createError(website: Website, error: Error) {
 
 export async function processWebsite(website: Website, visitedUrls: Set<string>, depth: number = 1) {
     try {
+        if (depth === 1) originalLink = website.url;
         if (visitedUrls.has(website.url)) return; // Para no procesar URLs ya visitadas
 
         visitedUrls.add(website.url);
@@ -67,7 +69,7 @@ export async function processWebsite(website: Website, visitedUrls: Set<string>,
                 const links = data('a');
                 links.each(async (index, element) => {
                     const link = data(element).attr('href');
-                    if (link && link.startsWith('http')) {
+                    if (link && link.startsWith(originalLink)) {
                         const linkedWebsite = createWebsite(website, link);
                         await processWebsite(linkedWebsite, visitedUrls, depth + 1);
                     }
