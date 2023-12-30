@@ -17,12 +17,12 @@ export class MyCronJob extends CronJob {
                 
         // Elimino las instancias antiguas
         let i = 0;
-        Object.values(this.websiteJobs).forEach(job => {
+        Object.values(this.websiteJobs).forEach(async (job) => {
           job.stop();
           if (websites[i]) delete this.websiteJobs[websites[i].id];
           else {
-            websiteRepository.websiteErrors(this.websitesIds[i]).delete();
-            websiteRepository.pages(this.websitesIds[i]).delete();
+            await websiteRepository.websiteErrors(this.websitesIds[i]).delete();
+            await websiteRepository.pages(this.websitesIds[i]).delete();
             delete this.websiteJobs[this.websitesIds[i]];
           }
           i++;
