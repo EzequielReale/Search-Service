@@ -46,11 +46,29 @@ export async function createError(website: Website, error: Error) {
     await websiteErrorRepository.create(err);
 }
 
+function getDomainName(link: string) {
+    try {
+      const url = new URL(link);
+      let domain = url.hostname;
+      
+      domain = domain.replace(/^www\./, '');
+      domain = domain.split('.').slice(0, -1).join('.');
+  
+      return domain;
+    } catch (error) {
+      console.error('Error getting domain name:', error);
+      return '';
+    }
+}
+
 export async function processWebsite(website: Website, visitedUrls: Set<string>, depth: number = 1) {
     try {
-        if (depth === 1) originalLink = website.url;
+        if (depth === 1) {
+            originalLink = website.url;
+            originalLink = getDomainName(originalLink);
+        }
+        
         if (visitedUrls.has(website.url)) return; // Para no procesar URLs ya visitadas
-
         visitedUrls.add(website.url);
 
         const response = await getWebsiteInfo(website);
@@ -69,7 +87,7 @@ export async function processWebsite(website: Website, visitedUrls: Set<string>,
                 const links = data('a');
                 links.each(async (index, element) => {
                     const link = data(element).attr('href');
-                    if (link && link.startsWith(originalLink)) {
+                    if (link && link.startsWith('http') && link.includes(originalLink)) {
                         const linkedWebsite = createWebsite(website, link);
                         await processWebsite(linkedWebsite, visitedUrls, depth + 1);
                     }
